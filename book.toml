@@ -1,6 +1,6 @@
 [book]
 authors = ["Hantong Chen"]
-language = "zh"
+language = "zh-CN"
 multilingual = true
 src = "src"
-title = "Hantong's Rust Resources"
+title = "Rust 中文资源导航"

@@ -1,3 +1,3 @@
-# Summary
+# Rust 中文资源导航
 
-- [Intro](./intro.md)
+[引言](./index.md)

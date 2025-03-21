@@ -1,5 +1,7 @@
 # Rust 中文资源导航
 
+![license-CC--BY--NC--SA--4.0-green](https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-green)
+
 这里是寒彤, 一位 Rust 爱好者和开发者.
 
 ## 前言提要
@@ -20,7 +22,8 @@ _本部分包含了一些适合 Rust 初学者的学习资源, 循序渐进地�
 
 #### 入门必读
 
-- [`course.rs`](https://course.rs/)
+- [Rust 学习之旅 `tour.han.rs` (建设中)](https://tour.han.rs/)
+- [Rust 语言圣经](https://course.rs/)
 
 #### 进阶必读
 
@@ -36,7 +39,7 @@ _[`This Week in Rust`](https://this-week-in-rust.org/) 是 Rust 社区的一份�
 
 _精选的 Rust 更新: 及时了解 Rust 社区的活动、学习资源和最新发展._
 
-[`twir.han.rs` (TODO)](https://twir.han.rs/)
+[TWiR 译文辑录 `twir.han.rs` (建设中)](https://twir.han.rs/)
 
 (已翻译的若干文章现暂存于 [`acfun.win`](https://acfun.win/)).
 
