@@ -1,0 +1,3 @@
+[submodule "src/glossary"]
+	path = src/glossary
+	url = git@github.com:han-rs/glossary.git
