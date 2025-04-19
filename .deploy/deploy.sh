@@ -123,6 +123,53 @@ install_mdbook() {
   fi
 }
 
+# Function: Install mdbook
+install_mdbook_utils() {
+  # Check if mdbook needs to be reinstalled
+  if [[ ! -f "$CACHE_DIR/bin/mdbook-utils" || $(cat "$CACHE_DIR/bin/mdbook-utils-cache-version" 2>/dev/null) != "$SETUP_MDBOOK_UTILS_VERSION" ]]; then
+    echo "Installing mdbook-utils v$SETUP_MDBOOK_UTILS_VERSION..."
+
+    # Create a temporary directory
+    temp_dir=$(mktemp -d) || {
+      echo "Failed to create temporary directory"
+      exit 1
+    }
+
+    echo "Downloading mdbook-utils..."
+    curl -L -f "${GITHUB_PROXY}https://github.com/hanyu-dev/mdbook-utils/releases/download/v$SETUP_MDBOOK_UTILS_VERSION/mdbook-utils-v$SETUP_MDBOOK_UTILS_VERSION-x86_64-unknown-linux-gnu.tar.gz" -o "$temp_dir/mdbook-utils.tar.gz" || {
+      echo "Failed to download mdbook-utils"
+      exit 1
+    }
+
+    echo "Extracting mdbook-utils..."
+    tar -xzf "$temp_dir/mdbook-utils.tar.gz" -C "$temp_dir" || {
+      echo "Failed to extract mdbook-utils"
+      exit 1
+    }
+
+    # Move to bin directory and set execution permission
+    mv "$temp_dir/mdbook-utils" "$CACHE_DIR/bin/" || {
+      echo "Failed to move mdbook-utils binary file"
+      exit 1
+    }
+
+    chmod +x "$CACHE_DIR/bin/mdbook-utils" || {
+      echo "Failed to set executable permission for mdbook-utils"
+      exit 1
+    }
+
+    # Clean up temporary files
+    rm -rf "$temp_dir"
+
+    # Record the installed version
+    echo "$SETUP_MDBOOK_UTILS_VERSION" >"$CACHE_DIR/bin/mdbook-utils-cache-version"
+
+    echo "mdbook-utils installation completed"
+  else
+    echo "Using cached mdbook-utils"
+  fi
+}
+
 # =================== Default Settings ===================
 
 # Script behavior control
@@ -167,6 +214,7 @@ CLEAR_CACHE_DIR=false
 SETUP_MDBOOK=${SETUP_MDBOOK:-false}
 SETUP_MDBOOK_VERSION=${SETUP_MDBOOK_VERSION:-"0.4.48"}
 SETUP_MDBOOK_UTILS=${SETUP_MDBOOK_UTILS:-false}
+SETUP_MDBOOK_UTILS_VERSION=${SETUP_MDBOOK_UTILS_VERSION:-"0.1.4"}
 
 # Custom command
 CUSTOM_CMD=${CUSTOM_CMD:-""}
@@ -204,8 +252,17 @@ while [[ $# -gt 0 ]]; do
     fi
     shift
     ;;
+  --install-mdbook-utils=*)
+    SETUP_MDBOOK_UTILS=true
+    SETUP_MDBOOK_UTILS_VERSION="${1#*=}"
+    shift
+    ;;
   --install-mdbook-utils)
     SETUP_MDBOOK_UTILS=true
+    if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+      SETUP_MDBOOK_UTILS_VERSION="$2"
+      shift
+    fi
     shift
     ;;
   --cache-dir)
@@ -273,11 +330,7 @@ fi
 
 # Install mdbook-utils
 if [ "$SETUP_MDBOOK_UTILS" != false ]; then
-  echo "Installing mdbook-utils..."
-  cargo install --locked mdbook-utils || {
-    echo "Failed to install mdbook-utils"
-    exit 1
-  }
+  install_mdbook_utils
 fi
 
 # Update PATH to make tools available
