@@ -407,16 +407,18 @@ echo "PATH=$PATH"
 # Print version information
 echo "======== VERSION INFO ========"
 echo -n "Cargo: "
-cargo --version || {
-  echo "Failed to get cargo version"
-  exit 1
-}
+if [ "$SETUP_RUST" != false ]; then
+  cargo --version || {
+    echo "Failed to get cargo version"
+    exit 1
+  }
 
-echo -n "Rustup: "
-rustup --version || {
-  echo "Failed to get rustup version"
-  exit 1
-}
+  echo -n "Rustup: "
+  rustup --version || {
+    echo "Failed to get rustup version"
+    exit 1
+  }
+fi
 
 if [ "$SETUP_MDBOOK" != false ]; then
   echo -n "mdBook: "
