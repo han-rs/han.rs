@@ -170,6 +170,53 @@ install_mdbook_utils() {
   fi
 }
 
+# Function: Install zola
+install_zola() {
+  # Check if mdbook needs to be reinstalled
+  if [[ ! -f "$CACHE_DIR/bin/zola" || $(cat "$CACHE_DIR/bin/zola-cache-version" 2>/dev/null) != "$SETUP_ZOLA_VERSION" ]]; then
+    echo "Installing zola v$SETUP_ZOLA_VERSION..."
+
+    # Create a temporary directory
+    temp_dir=$(mktemp -d) || {
+      echo "Failed to create temporary directory"
+      exit 1
+    }
+
+    echo "Downloading zola..."
+    curl -L -f "${GITHUB_PROXY}https://github.com/hanyu-dev/zola-zh-patch/releases/download/v$SETUP_ZOLA_VERSION/zola-v$SETUP_ZOLA_VERSION-x86_64-unknown-linux-gnu.tar.gz" -o "$temp_dir/zola.tar.gz" || {
+      echo "Failed to download zola"
+      exit 1
+    }
+
+    echo "Extracting zola..."
+    tar -xzf "$temp_dir/zola.tar.gz" -C "$temp_dir" || {
+      echo "Failed to extract zola"
+      exit 1
+    }
+
+    # Move to bin directory and set execution permission
+    mv "$temp_dir/zola" "$CACHE_DIR/bin/" || {
+      echo "Failed to move zola binary file"
+      exit 1
+    }
+
+    chmod +x "$CACHE_DIR/bin/zola" || {
+      echo "Failed to set executable permission for zola"
+      exit 1
+    }
+
+    # Clean up temporary files
+    rm -rf "$temp_dir"
+
+    # Record the installed version
+    echo "$SETUP_ZOLA_VERSION" >"$CACHE_DIR/bin/zola-cache-version"
+
+    echo "zola installation completed"
+  else
+    echo "Using cached zola"
+  fi
+}
+
 # =================== Default Settings ===================
 
 # Script behavior control
@@ -215,6 +262,8 @@ SETUP_MDBOOK=${SETUP_MDBOOK:-false}
 SETUP_MDBOOK_VERSION=${SETUP_MDBOOK_VERSION:-"0.4.48"}
 SETUP_MDBOOK_UTILS=${SETUP_MDBOOK_UTILS:-false}
 SETUP_MDBOOK_UTILS_VERSION=${SETUP_MDBOOK_UTILS_VERSION:-"0.1.4"}
+SETUP_ZOLA=${SETUP_ZOLA:-false}
+SETUP_ZOLA_VERSION=${SETUP_ZOLA_VERSION:-"0.20.0"}
 
 # Custom command
 CUSTOM_CMD=${CUSTOM_CMD:-""}
@@ -261,6 +310,19 @@ while [[ $# -gt 0 ]]; do
     SETUP_MDBOOK_UTILS=true
     if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
       SETUP_MDBOOK_UTILS_VERSION="$2"
+      shift
+    fi
+    shift
+    ;;
+  --install-zola=*)
+    SETUP_ZOLA=true
+    SETUP_ZOLA_VERSION="${1#*=}"
+    shift
+    ;;
+  --install-zola)
+    SETUP_ZOLA=true
+    if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+      SETUP_ZOLA_VERSION="$2"
       shift
     fi
     shift
@@ -333,6 +395,11 @@ if [ "$SETUP_MDBOOK_UTILS" != false ]; then
   install_mdbook_utils
 fi
 
+# Install Zola (if needed)
+if [ "$SETUP_ZOLA" != false ]; then
+  install_zola
+fi
+
 # Update PATH to make tools available
 export PATH="$(realpath "$CACHE_DIR/bin"):$PATH"
 echo "PATH=$PATH"
@@ -363,6 +430,14 @@ if [ "$SETUP_MDBOOK_UTILS" != false ]; then
   echo -n "mdBook Utils: "
   mdbook-utils --version || {
     echo "Failed to get mdbook-utils version"
+    exit 1
+  }
+fi
+
+if [ "$SETUP_ZOLA" != false ]; then
+  echo -n "zola: "
+  zola --version || {
+    echo "Failed to get zola version"
     exit 1
   }
 fi
