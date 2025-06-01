@@ -123,9 +123,9 @@ install_mdbook() {
   fi
 }
 
-# Function: Install mdbook
+# Function: Install mdbook-utils
 install_mdbook_utils() {
-  # Check if mdbook needs to be reinstalled
+  # Check if mdbook-utils needs to be reinstalled
   if [[ ! -f "$CACHE_DIR/bin/mdbook-utils" || $(cat "$CACHE_DIR/bin/mdbook-utils-cache-version" 2>/dev/null) != "$SETUP_MDBOOK_UTILS_VERSION" ]]; then
     echo "Installing mdbook-utils v$SETUP_MDBOOK_UTILS_VERSION..."
 
@@ -170,9 +170,44 @@ install_mdbook_utils() {
   fi
 }
 
+# Function: Install mdbook-alerts
+install_mdbook_alerts() {
+  # Check if mdbook-alerts needs to be reinstalled
+  if [[ ! -f "$CACHE_DIR/bin/mdbook-alerts" || $(cat "$CACHE_DIR/bin/mdbook-alerts-cache-version" 2>/dev/null) != "$SETUP_MDBOOK_ALERTS_VERSION" ]]; then
+    echo "Installing mdbook-alerts v$SETUP_MDBOOK_ALERTS_VERSION..."
+
+    # Create a temporary directory
+    # temp_dir=$(mktemp -d) || {
+    #   echo "Failed to create temporary directory"
+    #   exit 1
+    # }
+
+    echo "Downloading mdbook-alerts..."
+    curl -L -f "${GITHUB_PROXY}https://github.com/lambdalisue/rs-mdbook-alerts/releases/download/v$SETUP_MDBOOK_ALERTS_VERSION/mdbook-alerts-x86_64-unknown-linux-gnu" -o "$CACHE_DIR/bin/mdbook-alerts" || {
+      echo "Failed to download mdbook-alerts"
+      exit 1
+    }
+
+    chmod +x "$CACHE_DIR/bin/mdbook-alerts" || {
+      echo "Failed to set executable permission for mdbook-alerts"
+      exit 1
+    }
+
+    # Clean up temporary files
+    # rm -rf "$temp_dir"
+
+    # Record the installed version
+    echo "$SETUP_MDBOOK_ALERTS_VERSION" >"$CACHE_DIR/bin/mdbook-alerts-cache-version"
+
+    echo "mdbook-alerts installation completed"
+  else
+    echo "Using cached mdbook-alerts"
+  fi
+}
+
 # Function: Install zola
 install_zola() {
-  # Check if mdbook needs to be reinstalled
+  # Check if zola needs to be reinstalled
   if [[ ! -f "$CACHE_DIR/bin/zola" || $(cat "$CACHE_DIR/bin/zola-cache-version" 2>/dev/null) != "$SETUP_ZOLA_VERSION" ]]; then
     echo "Installing zola v$SETUP_ZOLA_VERSION..."
 
@@ -262,6 +297,8 @@ SETUP_MDBOOK=${SETUP_MDBOOK:-false}
 SETUP_MDBOOK_VERSION=${SETUP_MDBOOK_VERSION:-"0.4.48"}
 SETUP_MDBOOK_UTILS=${SETUP_MDBOOK_UTILS:-false}
 SETUP_MDBOOK_UTILS_VERSION=${SETUP_MDBOOK_UTILS_VERSION:-"0.1.4"}
+SETUP_MDBOOK_ALERTS=${SETUP_MDBOOK_ALERTS:-$SETUP_MDBOOK}
+SETUP_MDBOOK_ALERTS_VERSION=${SETUP_MDBOOK_ALERTS_VERSION:-"0.7.0"}
 SETUP_ZOLA=${SETUP_ZOLA:-false}
 SETUP_ZOLA_VERSION=${SETUP_ZOLA_VERSION:-"0.20.0"}
 
@@ -310,6 +347,19 @@ while [[ $# -gt 0 ]]; do
     SETUP_MDBOOK_UTILS=true
     if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
       SETUP_MDBOOK_UTILS_VERSION="$2"
+      shift
+    fi
+    shift
+    ;;
+  --install-mdbook-alerts=*)
+    SETUP_MDBOOK_ALERTS=true
+    SETUP_MDBOOK_ALERTS_VERSION="${1#*=}"
+    shift
+    ;;
+  --install-mdbook-alerts)
+    SETUP_MDBOOK_ALERTS=true
+    if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+      SETUP_MDBOOK_ALERTS_VERSION="$2"
       shift
     fi
     shift
@@ -395,6 +445,11 @@ if [ "$SETUP_MDBOOK_UTILS" != false ]; then
   install_mdbook_utils
 fi
 
+# Install mdbook-alerts
+if [ "$SETUP_MDBOOK_ALERTS" != false ]; then
+  install_mdbook_alerts
+fi
+
 # Install Zola (if needed)
 if [ "$SETUP_ZOLA" != false ]; then
   install_zola
@@ -406,8 +461,8 @@ echo "PATH=$PATH"
 
 # Print version information
 echo "======== VERSION INFO ========"
-echo -n "Cargo: "
 if [ "$SETUP_RUST" != false ]; then
+  echo -n "Cargo: "
   cargo --version || {
     echo "Failed to get cargo version"
     exit 1
@@ -432,6 +487,14 @@ if [ "$SETUP_MDBOOK_UTILS" != false ]; then
   echo -n "mdBook Utils: "
   mdbook-utils --version || {
     echo "Failed to get mdbook-utils version"
+    exit 1
+  }
+fi
+
+if [ "$SETUP_MDBOOK_ALERTS" != false ]; then
+  echo -n "mdBook Alerts: "
+  mdbook-alerts --version || {
+    echo "Failed to get mdbook-alerts version"
     exit 1
   }
 fi
